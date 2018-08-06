@@ -30,13 +30,18 @@ type Domain string
 
 // WordpressSpec defines the desired state of Wordpress
 type WordpressSpec struct {
+	WordpressRuntimeSpec `json:",inline"`
+	// Domains for this this site answers. The first item is set as the "main
+	// domain" (WP_HOME and WP_SITEURL constants).
+	Domains []Domain `json:"domains"`
 	// Number of desired web pods. This is a pointer to distinguish between
 	// explicit zero and not specified. Defaults to 1.
 	// +optional
 	Replicas *int32 `json:"replicas,omitempty"`
-	// Domains for this this site answers. The first item is set as the "main
-	// domain" (WP_HOME and WP_SITEURL constants).
-	Domains []Domain `json:"domains"`
+}
+
+// WordpressRuntimeSpec containt runtime configuration for wordpress sites
+type WordpressRuntimeSpec struct {
 	// TLSSecretRef a secret containing the TLS certificates for this site.
 	// +optional
 	TLSSecretRef SecretRef `json:"tlsSecretRef,omitempty"`

@@ -18,8 +18,12 @@ package wordpress
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"sort"
+	"strings"
 
+	"github.com/imdario/mergo"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -105,6 +109,7 @@ type ReconcileWordpress struct {
 // Automatically generate RBAC rules to allow the Controller to read and write Deployments
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=wordpress.presslabs.org,resources=wordpresses,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=wordpress.presslabs.org,resources=wordpresspolicies,verbs=get;list;watch;create;update;patch;delete
 func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the Wordpress instance
 	wp := &wordpressv1alpha1.Wordpress{}
@@ -119,6 +124,40 @@ func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Res
 		return reconcile.Result{}, err
 	}
 	wp = wp.WithDefaults()
+
+	policies := []*wordpressv1alpha1.WordpressPolicy{}
+
+	for k, polVersion := range wp.Annotations {
+		if strings.HasPrefix(k, wordpressv1alpha1.WordpressPolicyAnnotationPrefix) {
+			polName := strings.TrimPrefix(k, wordpressv1alpha1.WordpressPolicyAnnotationPrefix)
+			policy := &wordpressv1alpha1.WordpressPolicy{}
+			polKey := client.ObjectKey{Name: polName}
+
+			err = r.Get(context.TODO(), polKey, policy)
+
+			if err != nil {
+				return reconcile.Result{}, err
+			}
+
+			if policy.ResourceVersion != polVersion {
+				return reconcile.Result{}, fmt.Errorf("WordpressPolicy %s has wrong version.", polName)
+			}
+
+			policies = append(policies, policy)
+		}
+	}
+
+	sort.Slice(policies, func(i, j int) bool {
+		return policies[i].Spec.Priority > policies[j].Spec.Priority
+	})
+
+	for _, policy := range policies {
+		log.Printf("Applying policy %s to %s/%s", policy.Name, wp.Namespace, wp.Name)
+		err = applyPolicy(wp, policy)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+	}
 
 	syncers := []sync.Interface{
 		sync.NewDeploymentSyncer(wp, r.scheme),
@@ -156,6 +195,14 @@ func (r *ReconcileWordpress) sync(wp *wordpressv1alpha1.Wordpress, syncers []syn
 		if op != controllerutil.OperationNoop {
 			r.recorder.Eventf(wp, eventNormal, reason, "%T %s/%s %s successfully", existing, key.Namespace, key.Name, op)
 		}
+	}
+	return nil
+}
+
+func applyPolicy(wp *wordpressv1alpha1.Wordpress, pol *wordpressv1alpha1.WordpressPolicy) error {
+	p := pol.Spec.Template
+	if err := mergo.Merge(&wp.Spec.WordpressRuntimeSpec, p.Spec, mergo.WithOverride, mergo.WithAppendSlice); err != nil {
+		return err
 	}
 	return nil
 }

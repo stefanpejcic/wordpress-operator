@@ -24,15 +24,6 @@ spec:
           properties:
             cliPodTemplate:
               type: object
-            contentVolumeSpec:
-              properties:
-                emptyDir:
-                  type: object
-                hostPath:
-                  type: object
-                persistentVolumeClaim:
-                  type: object
-              type: object
             domains:
               items:
                 type: string
@@ -68,6 +59,15 @@ spec:
                 type: object
               type: array
             webPodTemplate:
+              type: object
+            webrootVolumeSpec:
+              properties:
+                emptyDir:
+                  type: object
+                hostPath:
+                  type: object
+                persistentVolumeClaim:
+                  type: object
               type: object
           required:
           - domains

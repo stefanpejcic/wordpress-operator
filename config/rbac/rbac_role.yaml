@@ -28,3 +28,51 @@ rules:
   - update
   - patch
   - delete
+- apiGroups:
+  - wordpress.presslabs.org
+  resources:
+  - wordpresspolicies
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - wordpress.presslabs.org
+  resources:
+  - wordpresspolicies
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - wordpress.presslabs.org
+  resources:
+  - wordpress
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete

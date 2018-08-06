@@ -1,0 +1,10 @@
+apiVersion: wordpress.presslabs.org/v1alpha1
+kind: WordpressPolicy
+metadata:
+  name: wordpresspolicy-sample
+spec:
+  template:
+    spec:
+      env:
+        - name: "foo"
+          value: "bar"
