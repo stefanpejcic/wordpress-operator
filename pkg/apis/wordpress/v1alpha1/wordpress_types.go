@@ -63,7 +63,7 @@ type WordpressSpec struct {
 	// +optional
 	Tag string `json:"tag,omitempty"`
 	// ImagePullPolicy overrides WordpressRuntime spec.imagePullPolicy
-	// +kubebuilder:validation:Enum=Always,IfNotPresent,Never
+	// +kubebuilder:validation:Enum=Always;IfNotPresent;Never
 	// +optional
 	ImagePullPolicy corev1.PullPolicy `json:"imagePullPolicy,omitempty"`
 	// ImagePullSecrets defines additional secrets to use when pulling images
@@ -213,7 +213,7 @@ type CodeVolumeSpec struct {
 type MediaVolumeSpec struct {
 	// ReadOnly specifies if the volume should be mounted read-only inside the
 	// wordpress runtime container
-	ReadOnly bool
+	ReadOnly bool `json:"readOnly,omitempty"`
 	// S3VolumeSource specifies the S3 object storage configuration for media
 	// files. It has the highest level of precedence over EmptyDir, HostPath
 	// and PersistentVolumeClaim
@@ -261,13 +261,11 @@ type WordpressStatus struct {
 	Replicas int32 `json:"replicas,omitempty"`
 }
 
-// +genclient
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-// Wordpress is the Schema for the wordpresses API
-// +k8s:openapi-gen=true
+// +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:subresource:scale:specpath=.spec.replicas,statuspath=.status.replicas
+
+// Wordpress is the Schema for the wordpresses API
 type Wordpress struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -276,7 +274,7 @@ type Wordpress struct {
 	Status WordpressStatus `json:"status,omitempty"`
 }
 
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:object:root=true
 
 // WordpressList contains a list of Wordpress
 type WordpressList struct {
